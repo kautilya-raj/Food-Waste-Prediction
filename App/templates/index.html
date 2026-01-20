@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ place }} Food Wastage Prediction</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 20px;
+            background: #0f1419;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Background patterns and gradients */
+        body::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(234, 179, 8, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(251, 146, 60, 0.06) 0%, transparent 50%);
+        }
+
+        body::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 50px 50px;
+            opacity: 0.3;
+        }
+
+        /* Different accent colors based on place */
+        body.hotel-bg::before {
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(99, 102, 241, 0.06) 0%, transparent 50%);
+        }
+
+        body.home-bg::before {
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(99, 102, 241, 0.06) 0%, transparent 50%);
+        }
+
+        body.mess-bg::before {
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(251, 146, 60, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(249, 115, 22, 0.06) 0%, transparent 50%);
+        }
+
+        .hotel-center {
+            width: 100%;
+            max-width: 650px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hotel-menu {
+            background: rgba(20, 25, 35, 0.85);
+            backdrop-filter: blur(20px);
+            padding: 50px 45px;
+            border-radius: 24px;
+            width: 100%;
+            box-shadow: 
+                0 25px 70px rgba(0, 0, 0, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            animation: slideUp 0.8s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-title {
+            font-size: 28px;
+            font-weight: 600;
+            color: #e5e7eb;
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeIn 1s ease-out 0.3s both;
+            position: relative;
+            padding-bottom: 15px;
+        }
+
+        .animate-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #eab308, transparent);
+            border-radius: 2px;
+        }
+
+        body.hotel-bg .animate-title::after {
+            background: linear-gradient(90deg, transparent, #3b82f6, transparent);
+        }
+
+        body.home-bg .animate-title::after {
+            background: linear-gradient(90deg, transparent, #3b82f6, transparent);
+        }
+
+        body.mess-bg .animate-title::after {
+            background: linear-gradient(90deg, transparent, #fb923c, transparent);
+        }
+
+        @keyframes fadeIn {
+            from { 
+                opacity: 0;
+                text-shadow: 0 0 20px rgba(234, 179, 8, 0);
+            }
+            to { 
+                opacity: 1;
+                text-shadow: 0 0 20px rgba(234, 179, 8, 0.2);
+            }
+        }
+
+        .animate-form {
+            animation: formSlide 0.8s ease-out 0.5s both;
+        }
+
+        @keyframes formSlide {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        label {
+            display: block;
+            color: #d1d5db;
+            font-weight: 500;
+            font-size: 14px;
+            margin-bottom: 8px;
+            margin-top: 20px;
+            letter-spacing: 0.3px;
+        }
+
+        label:first-of-type {
+            margin-top: 0;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="date"],
+        select {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            background: rgba(30, 35, 45, 0.6);
+            color: #e5e7eb;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        input[type="date"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #eab308;
+            background: rgba(30, 35, 45, 0.8);
+            box-shadow: 0 0 0 3px rgba(234, 179, 8, 0.1);
+        }
+
+        body.hotel-bg input[type="text"]:focus,
+        body.hotel-bg input[type="number"]:focus,
+        body.hotel-bg input[type="date"]:focus,
+        body.hotel-bg select:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        body.home-bg input[type="text"]:focus,
+        body.home-bg input[type="number"]:focus,
+        body.home-bg input[type="date"]:focus,
+        body.home-bg select:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        body.mess-bg input[type="text"]:focus,
+        body.mess-bg input[type="number"]:focus,
+        body.mess-bg input[type="date"]:focus,
+        body.mess-bg select:focus {
+            border-color: #fb923c;
+            box-shadow: 0 0 0 3px rgba(251, 146, 60, 0.1);
+        }
+
+        input::placeholder {
+            color: #6b7280;
+        }
+
+        select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23d1d5db' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 36px;
+        }
+
+        select option {
+            background: #1e2329;
+            color: #e5e7eb;
+        }
+
+        button {
+            margin-top: 30px;
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #eab308 0%, #f59e0b 100%);
+            color: #0f1419;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 25px rgba(234, 179, 8, 0.3);
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        body.hotel-bg button {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+            color: #ffffff;
+        }
+
+        body.home-bg button {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+            color: #ffffff;
+        }
+
+        body.mess-bg button {
+            background: linear-gradient(135deg, #fb923c 0%, #f97316 100%);
+            box-shadow: 0 10px 25px rgba(251, 146, 60, 0.3);
+            color: #ffffff;
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        button:hover::before {
+            left: 100%;
+        }
+
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(234, 179, 8, 0.4);
+        }
+
+        body.hotel-bg button:hover {
+            box-shadow: 0 15px 35px rgba(59, 130, 246, 0.4);
+        }
+
+        body.home-bg button:hover {
+            box-shadow: 0 15px 35px rgba(59, 130, 246, 0.4);
+        }
+
+        body.mess-bg button:hover {
+            box-shadow: 0 15px 35px rgba(251, 146, 60, 0.4);
+        }
+
+        button:active {
+            transform: translateY(-1px);
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 25px;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.2) 100%);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 12px;
+            color: #d1fae5;
+            animation: resultPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes resultPop {
+            0% {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .result h2 {
+            font-size: 20px;
+            margin-bottom: 12px;
+            font-weight: 600;
+            color: #6ee7b7;
+        }
+
+        .result p {
+            font-size: 15px;
+            line-height: 1.6;
+            font-weight: 400;
+            color: #d1fae5;
+        }
+
+        @media (max-width: 600px) {
+            .hotel-menu {
+                padding: 35px 25px;
+            }
+
+            .animate-title {
+                font-size: 22px;
+                margin-bottom: 30px;
+            }
+
+            label {
+                font-size: 13px;
+            }
+
+            input[type="text"],
+            input[type="number"],
+            input[type="date"],
+            select {
+                padding: 12px 14px;
+                font-size: 14px;
+            }
+
+            button {
+                padding: 14px;
+                font-size: 15px;
+            }
+
+            .result h2 {
+                font-size: 18px;
+            }
+
+            .result p {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+
+<body class="{% if place == 'Hotel' %}hotel-bg{% elif place == 'Home' %}home-bg{% elif place == 'Mess' %}mess-bg{% endif %}">
+
+<div class="hotel-center">
+    <div class="hotel-menu animate-container">
+
+        <h1 class="animate-title">
+            🍽️ {{ place }} Food Wastage Prediction
+        </h1>
+
+        <form method="POST" class="animate-form">
+
+            {% if place == 'Home' %}
+            
+            <label>Meal</label>
+            <select name="meal" required>
+                <option value="">Select Meal</option>
+                <option>Breakfast</option>
+                <option>Lunch</option>
+                <option>Dinner</option>
+            </select>
+
+            <label>Food Item</label>
+            <input type="text" name="food_item" placeholder="e.g. Rice, Curry, Roti" required>
+
+            <label>Quantity Prepared (g)</label>
+            <input type="number" step="0.1" name="quantity_prepared_g" required>
+
+            <label>Quantity Consumed (g)</label>
+            <input type="number" step="0.1" name="quantity_consumed_g" required>
+
+            <label>Quantity Wasted (g)</label>
+            <input type="number" step="0.1" name="quantity_wasted_g" required>
+
+            <label>People Count</label>
+            <input type="number" name="people_count" required>
+
+            <label>Food Type</label>
+            <select name="food_type" required>
+                <option value="">Select Food Type</option>
+                <option>Veg</option>
+                <option>Non-Veg</option>
+            </select>
+
+            <label>Waste Reason</label>
+            <select name="waste_reason" required>
+                <option value="">Select Reason</option>
+                <option>Over Cooking</option>
+                <option>Poor Quality</option>
+                <option>Leftovers</option>
+                <option>Expired</option>
+                <option>Didn't Like Taste</option>
+                <option>Other</option>
+            </select>
+
+            {% elif place == 'Mess' %}
+
+            <label>Hostel Name</label>
+            <input type="text" name="hostel_name" placeholder="e.g. Raman Hostel" required>
+
+            <label>Meal</label>
+            <select name="meal" required>
+                <option value="">Select Meal</option>
+                <option>Breakfast</option>
+                <option>Lunch</option>
+                <option>Dinner</option>
+            </select>
+
+            <label>Quantity Prepared (kg)</label>
+            <input type="number" step="0.1" name="quantity_prepared_kg" required>
+
+            <label>Quantity Consumed (kg)</label>
+            <input type="number" step="0.1" name="quantity_consumed_kg" required>
+
+            <label>Students Present</label>
+            <input type="number" name="students_present" required>
+
+            <label>Students Registered</label>
+            <input type="number" name="students_registered" required>
+
+            <label>Food Type</label>
+            <select name="food_type" required>
+                <option value="">Select Food Type</option>
+                <option>Veg</option>
+                <option>Non-Veg</option>
+            </select>
+
+            {% else %}
+
+            <label>Type of Food</label>
+            <input type="text" name="type_of_food" placeholder="e.g. Rice, Biryani" required>
+
+            <label>Number of Guests</label>
+            <input type="number" name="num_guests" required>
+
+            <label>Event Type</label>
+            <select name="event_type" required>
+                <option value="">Select Event</option>
+                <option>Wedding</option>
+                <option>Conference</option>
+                <option>Corporate Event</option>
+                <option>Regular Service</option>
+            </select>
+
+            <label>Quantity of Food (kg)</label>
+            <input type="number" step="0.1" name="quantity_food" required>
+
+            <label>Storage Conditions</label>
+            <select name="storage_condition" required>
+                <option>Refrigerated</option>
+                <option>Room Temperature</option>
+                <option>No Storage</option>
+            </select>
+
+            <label>Purchase History</label>
+            <select name="purchase_history" required>
+                <option>Bulk Purchase</option>
+                <option>Moderate Purchase</option>
+                <option>Just-in-Time</option>
+            </select>
+
+            <label>Seasonality</label>
+            <select name="seasonality" required>
+                <option>Summer</option>
+                <option>Winter</option>
+                <option>Monsoon</option>
+                <option>Festival Season</option>
+            </select>
+
+            <label>Preparation Method</label>
+            <select name="prep_method" required>
+                <option>Freshly Cooked</option>
+                <option>Pre-cooked</option>
+                <option>Frozen & Reheated</option>
+                <option>Live Counter</option>
+            </select>
+
+            <label>Geographical Location</label>
+            <input type="text" name="location" placeholder="e.g. Urban / Delhi" required>
+
+            <label>Pricing (₹ per plate)</label>
+            <input type="number" step="0.1" name="pricing" required>
+
+            {% endif %}
+
+            <button type="submit">Predict</button>
+        </form>
+
+        {% if result %}
+        <div class="result animate-result">
+            <h2>Prediction Result</h2>
+            <p>{{ result }}</p>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+</body>
+</html>
