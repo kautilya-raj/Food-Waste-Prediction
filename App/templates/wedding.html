@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Wedding Food Wastage Prediction</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Food Wastage Prediction</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -47,12 +49,14 @@
 
         .wedding-center {
             width: 100%;
-            max-width: 650px;
+            max-width: 1200px;
             display: flex;
+            gap: 30px;
             justify-content: center;
-            align-items: center;
+            align-items: flex-start;
             position: relative;
             z-index: 1;
+            flex-wrap: wrap;
         }
 
         .wedding-menu {
@@ -60,12 +64,34 @@
             backdrop-filter: blur(20px);
             padding: 50px 45px;
             border-radius: 24px;
-            width: 100%;
+            flex: 1;
+            min-width: 300px;
+            max-width: 650px;
             box-shadow: 
                 0 25px 70px rgba(0, 0, 0, 0.6),
                 inset 0 1px 0 rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.06);
             animation: slideUp 0.8s ease-out;
+        }
+
+        .analytics-container {
+            background: rgba(20, 25, 35, 0.85);
+            backdrop-filter: blur(20px);
+            padding: 30px;
+            border-radius: 24px;
+            flex: 1;
+            min-width: 300px;
+            max-width: 500px;
+            box-shadow: 
+                0 25px 70px rgba(0, 0, 0, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            animation: slideUp 0.8s ease-out 0.2s both;
+            display: none;
+        }
+
+        .analytics-container.show {
+            display: block;
         }
 
         @keyframes slideUp {
@@ -167,6 +193,10 @@
             color: #6b7280;
         }
 
+        input:invalid {
+            border-color: rgba(239, 68, 68, 0.5);
+        }
+
         select {
             cursor: pointer;
             appearance: none;
@@ -224,6 +254,12 @@
             transform: translateY(-1px);
         }
 
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         .result {
             margin-top: 30px;
             padding: 25px;
@@ -259,8 +295,149 @@
             color: #d1fae5;
         }
 
+        .error {
+            margin-top: 10px;
+            padding: 12px;
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            color: #fecaca;
+            font-size: 14px;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .chart-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #e5e7eb;
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        #wastageChart {
+            margin-bottom: 30px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: rgba(30, 35, 45, 0.6);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            background: rgba(30, 35, 45, 0.8);
+            border-color: rgba(168, 85, 247, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #9ca3af;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: #e5e7eb;
+        }
+
+        .event-breakdown {
+            background: rgba(30, 35, 45, 0.6);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .breakdown-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #e5e7eb;
+            margin-bottom: 15px;
+        }
+
+        .breakdown-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .breakdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .breakdown-label {
+            font-size: 14px;
+            color: #9ca3af;
+        }
+
+        .breakdown-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: #e5e7eb;
+        }
+
+        .clear-data-btn {
+            margin-top: 20px;
+            width: 100%;
+            padding: 12px;
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .clear-data-btn:hover {
+            background: rgba(239, 68, 68, 0.3);
+            border-color: rgba(239, 68, 68, 0.5);
+        }
+
+        @media (max-width: 1024px) {
+            .wedding-center {
+                flex-direction: column;
+            }
+
+            .wedding-menu,
+            .analytics-container {
+                max-width: 100%;
+            }
+        }
+
         @media (max-width: 600px) {
-            .wedding-menu {
+            .wedding-menu,
+            .analytics-container {
                 padding: 35px 25px;
             }
 
@@ -291,6 +468,14 @@
             .result p {
                 font-size: 14px;
             }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stat-value {
+                font-size: 20px;
+            }
         }
     </style>
 </head>
@@ -299,9 +484,9 @@
 
 <div class="wedding-center">
     <div class="wedding-menu">
-        <h1>Event Wastage</h1>
+        <h1>💒 Event Wastage Analytics</h1>
 
-        <form method="POST">
+        <form method="POST" id="eventForm">
 
             <label>Event Type</label>
             <select name="event_type" required>
@@ -310,13 +495,16 @@
                 <option>Birthday</option>
                 <option>Corporate</option>
                 <option>Reception</option>
+                <option>Anniversary</option>
+                <option>Conference</option>
             </select>
 
             <label>Guests Count</label>
-            <input type="number" name="guests_count" required>
+            <input type="number" name="guests_count" min="1" placeholder="e.g. 200" required>
 
             <label>Menu Type</label>
             <select name="menu_type" required>
+                <option value="">Select Menu Type</option>
                 <option>Veg</option>
                 <option>Non-Veg</option>
                 <option>Mixed</option>
@@ -324,25 +512,31 @@
 
             <label>Meal Type</label>
             <select name="meal_type" required>
+                <option value="">Select Meal Type</option>
                 <option>Buffet</option>
                 <option>Plated</option>
+                <option>Family Style</option>
             </select>
 
             <label>Season</label>
             <select name="season" required>
+                <option value="">Select Season</option>
                 <option>Summer</option>
                 <option>Monsoon</option>
                 <option>Winter</option>
+                <option>Spring</option>
             </select>
 
             <label>Food Prepared (kg)</label>
-            <input type="number" step="0.1" name="food_prepared_kg" required>
+            <input type="number" step="0.1" min="0" name="food_prepared_kg" placeholder="e.g. 150.5" required>
 
             <label>Food Wasted (kg)</label>
-            <input type="number" step="0.1" name="food_wasted_kg" required>
+            <input type="number" step="0.1" min="0" name="food_wasted_kg" placeholder="e.g. 25.3" required>
 
             <label>Waste Percentage (%)</label>
-            <input type="number" step="0.1" name="waste_percentage" required>
+            <input type="number" step="0.1" min="0" max="100" name="waste_percentage" placeholder="Auto-calculated or enter manually" required>
+
+            <div class="error" id="errorMessage"></div>
 
             <button type="submit">Predict</button>
         </form>
@@ -354,7 +548,294 @@
         </div>
         {% endif %}
     </div>
+
+    <div class="analytics-container" id="analyticsContainer">
+        <h2 class="chart-title">📊 Wastage Trends</h2>
+        
+        <canvas id="wastageChart"></canvas>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total Events</div>
+                <div class="stat-value" id="totalEvents">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Avg Wastage</div>
+                <div class="stat-value" id="avgWastage">0%</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Wasted</div>
+                <div class="stat-value" id="totalWasted">0 kg</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Guests Served</div>
+                <div class="stat-value" id="totalGuests">0</div>
+            </div>
+        </div>
+
+        <div class="event-breakdown">
+            <div class="breakdown-title">Event Type Breakdown</div>
+            <div id="eventBreakdown"></div>
+        </div>
+
+        <button class="clear-data-btn" onclick="clearAllData()">Clear All Data</button>
+    </div>
 </div>
+
+<script>
+    const STORAGE_KEY = 'eventWastagePredictions';
+    let chart = null;
+
+    // Get predictions from localStorage
+    function getPredictions() {
+        const data = localStorage.getItem(STORAGE_KEY);
+        return data ? JSON.parse(data) : [];
+    }
+
+    // Save prediction to localStorage
+    function savePrediction(prediction) {
+        const predictions = getPredictions();
+        predictions.push({
+            ...prediction,
+            timestamp: new Date().toISOString()
+        });
+        
+        // Keep only last 15 predictions
+        if (predictions.length > 15) {
+            predictions.shift();
+        }
+        
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(predictions));
+        updateAnalytics();
+    }
+
+    // Auto-calculate waste percentage
+    document.querySelector('[name="food_prepared_kg"]').addEventListener('input', calculateWastePercentage);
+    document.querySelector('[name="food_wasted_kg"]').addEventListener('input', calculateWastePercentage);
+
+    function calculateWastePercentage() {
+        const prepared = parseFloat(document.querySelector('[name="food_prepared_kg"]').value) || 0;
+        const wasted = parseFloat(document.querySelector('[name="food_wasted_kg"]').value) || 0;
+        
+        if (prepared > 0 && wasted >= 0) {
+            const percentage = (wasted / prepared) * 100;
+            document.querySelector('[name="waste_percentage"]').value = percentage.toFixed(2);
+        }
+    }
+
+    // Create/Update chart and analytics
+    function updateAnalytics() {
+        const predictions = getPredictions();
+        
+        if (predictions.length === 0) {
+            document.getElementById('analyticsContainer').classList.remove('show');
+            return;
+        }
+
+        document.getElementById('analyticsContainer').classList.add('show');
+
+        // Update Chart
+        const labels = predictions.map((p, i) => {
+            const date = new Date(p.timestamp);
+            return date.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
+        });
+        const wasteData = predictions.map(p => parseFloat(p.wastePercentage) || 0);
+
+        const ctx = document.getElementById('wastageChart').getContext('2d');
+
+        if (chart) {
+            chart.destroy();
+        }
+
+        chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Waste %',
+                    data: wasteData,
+                    borderColor: 'rgba(168, 85, 247, 0.8)',
+                    backgroundColor: 'rgba(168, 85, 247, 0.2)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 6,
+                    pointHoverRadius: 8,
+                    pointBackgroundColor: 'rgba(168, 85, 247, 0.8)',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(20, 25, 35, 0.95)',
+                        titleColor: '#e5e7eb',
+                        bodyColor: '#d1d5db',
+                        borderColor: 'rgba(168, 85, 247, 0.5)',
+                        borderWidth: 1,
+                        padding: 12,
+                        displayColors: false,
+                        callbacks: {
+                            title: function(context) {
+                                const index = context[0].dataIndex;
+                                return predictions[index].eventType || 'Event';
+                            },
+                            label: function(context) {
+                                return 'Wastage: ' + context.parsed.y.toFixed(2) + '%';
+                            },
+                            afterLabel: function(context) {
+                                const index = context.dataIndex;
+                                const p = predictions[index];
+                                return [
+                                    'Guests: ' + (p.guestsCount || 0),
+                                    'Wasted: ' + (p.foodWasted || 0) + ' kg'
+                                ];
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            color: '#9ca3af',
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.05)'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: '#9ca3af'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.05)'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Update Statistics
+        const totalEvents = predictions.length;
+        const avgWastage = wasteData.reduce((a, b) => a + b, 0) / totalEvents;
+        const totalWasted = predictions.reduce((sum, p) => sum + (parseFloat(p.foodWasted) || 0), 0);
+        const totalGuests = predictions.reduce((sum, p) => sum + (parseInt(p.guestsCount) || 0), 0);
+
+        document.getElementById('totalEvents').textContent = totalEvents;
+        document.getElementById('avgWastage').textContent = avgWastage.toFixed(1) + '%';
+        document.getElementById('totalWasted').textContent = totalWasted.toFixed(1) + ' kg';
+        document.getElementById('totalGuests').textContent = totalGuests.toLocaleString();
+
+        // Update Event Breakdown
+        const eventCounts = {};
+        predictions.forEach(p => {
+            const type = p.eventType || 'Unknown';
+            eventCounts[type] = (eventCounts[type] || 0) + 1;
+        });
+
+        const breakdownHTML = Object.entries(eventCounts)
+            .sort((a, b) => b[1] - a[1])
+            .map(([type, count]) => `
+                <div class="breakdown-item">
+                    <span class="breakdown-label">${type}</span>
+                    <span class="breakdown-value">${count} event${count > 1 ? 's' : ''}</span>
+                </div>
+            `).join('');
+
+        document.getElementById('eventBreakdown').innerHTML = breakdownHTML;
+    }
+
+    // Clear all data
+    function clearAllData() {
+        if (confirm('Are you sure you want to clear all event data? This cannot be undone.')) {
+            localStorage.removeItem(STORAGE_KEY);
+            if (chart) {
+                chart.destroy();
+                chart = null;
+            }
+            document.getElementById('analyticsContainer').classList.remove('show');
+            location.reload();
+        }
+    }
+
+    // Form validation
+    document.getElementById('eventForm').addEventListener('submit', function(e) {
+        const errorMessage = document.getElementById('errorMessage');
+        errorMessage.classList.remove('show');
+
+        const foodPrepared = parseFloat(this.querySelector('[name="food_prepared_kg"]').value) || 0;
+        const foodWasted = parseFloat(this.querySelector('[name="food_wasted_kg"]').value) || 0;
+        const wastePercentage = parseFloat(this.querySelector('[name="waste_percentage"]').value) || 0;
+        const guestsCount = parseInt(this.querySelector('[name="guests_count"]').value) || 0;
+
+        // Validation checks
+        if (foodWasted > foodPrepared) {
+            e.preventDefault();
+            errorMessage.textContent = 'Food wasted cannot exceed food prepared!';
+            errorMessage.classList.add('show');
+            return;
+        }
+
+        if (wastePercentage > 100) {
+            e.preventDefault();
+            errorMessage.textContent = 'Waste percentage cannot exceed 100%!';
+            errorMessage.classList.add('show');
+            return;
+        }
+
+        if (guestsCount < 1) {
+            e.preventDefault();
+            errorMessage.textContent = 'At least 1 guest is required!';
+            errorMessage.classList.add('show');
+            return;
+        }
+
+        // Check if calculated percentage matches entered percentage (with tolerance)
+        const calculatedPercentage = (foodWasted / foodPrepared) * 100;
+        if (Math.abs(calculatedPercentage - wastePercentage) > 5) {
+            const userConfirm = confirm(
+                `Calculated waste percentage (${calculatedPercentage.toFixed(2)}%) differs from entered value (${wastePercentage}%). Continue anyway?`
+            );
+            if (!userConfirm) {
+                e.preventDefault();
+                return;
+            }
+        }
+    });
+
+    // Initialize analytics on page load
+    window.addEventListener('load', function() {
+        updateAnalytics();
+
+        // If there's a result, save the prediction
+        {% if result %}
+        const form = document.getElementById('eventForm');
+        const prediction = {
+            eventType: form.querySelector('[name="event_type"]').value,
+            guestsCount: form.querySelector('[name="guests_count"]').value,
+            menuType: form.querySelector('[name="menu_type"]').value,
+            mealType: form.querySelector('[name="meal_type"]').value,
+            season: form.querySelector('[name="season"]').value,
+            foodPrepared: form.querySelector('[name="food_prepared_kg"]').value,
+            foodWasted: form.querySelector('[name="food_wasted_kg"]').value,
+            wastePercentage: form.querySelector('[name="waste_percentage"]').value,
+            result: "{{ result }}"
+        };
+        savePrediction(prediction);
+        {% endif %}
+    });
+</script>
 
 </body>
 </html>
