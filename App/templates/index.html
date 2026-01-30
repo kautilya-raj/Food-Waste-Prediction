@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ place }} Food Wastage Prediction</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -66,12 +68,14 @@
 
         .hotel-center {
             width: 100%;
-            max-width: 650px;
+            max-width: 1200px;
             display: flex;
+            gap: 30px;
             justify-content: center;
-            align-items: center;
+            align-items: flex-start;
             position: relative;
             z-index: 1;
+            flex-wrap: wrap;
         }
 
         .hotel-menu {
@@ -79,12 +83,34 @@
             backdrop-filter: blur(20px);
             padding: 50px 45px;
             border-radius: 24px;
-            width: 100%;
+            flex: 1;
+            min-width: 300px;
+            max-width: 650px;
             box-shadow: 
                 0 25px 70px rgba(0, 0, 0, 0.6),
                 inset 0 1px 0 rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.06);
             animation: slideUp 0.8s ease-out;
+        }
+
+        .chart-container {
+            background: rgba(20, 25, 35, 0.85);
+            backdrop-filter: blur(20px);
+            padding: 30px;
+            border-radius: 24px;
+            flex: 1;
+            min-width: 300px;
+            max-width: 500px;
+            box-shadow: 
+                0 25px 70px rgba(0, 0, 0, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            animation: slideUp 0.8s ease-out 0.2s both;
+            display: none;
+        }
+
+        .chart-container.show {
+            display: block;
         }
 
         @keyframes slideUp {
@@ -226,6 +252,10 @@
             color: #6b7280;
         }
 
+        input:invalid {
+            border-color: rgba(239, 68, 68, 0.5);
+        }
+
         select {
             cursor: pointer;
             appearance: none;
@@ -313,6 +343,12 @@
             transform: translateY(-1px);
         }
 
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         .result {
             margin-top: 30px;
             padding: 25px;
@@ -348,8 +384,84 @@
             color: #d1fae5;
         }
 
+        .error {
+            margin-top: 10px;
+            padding: 12px;
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            color: #fecaca;
+            font-size: 14px;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        #wastageChart {
+            max-height: 400px;
+        }
+
+        .chart-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #e5e7eb;
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .stat-card {
+            background: rgba(30, 35, 45, 0.6);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #9ca3af;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: #e5e7eb;
+        }
+
+        @media (max-width: 1024px) {
+            .hotel-center {
+                flex-direction: column;
+            }
+
+            .hotel-menu,
+            .chart-container {
+                max-width: 100%;
+            }
+        }
+
         @media (max-width: 600px) {
-            .hotel-menu {
+            .hotel-menu,
+            .chart-container {
                 padding: 35px 25px;
             }
 
@@ -382,6 +494,10 @@
             .result p {
                 font-size: 14px;
             }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -395,7 +511,7 @@
             🍽️ {{ place }} Food Wastage Prediction
         </h1>
 
-        <form method="POST" class="animate-form">
+        <form method="POST" class="animate-form" id="predictionForm">
 
             {% if place == 'Home' %}
             
@@ -411,16 +527,16 @@
             <input type="text" name="food_item" placeholder="e.g. Rice, Curry, Roti" required>
 
             <label>Quantity Prepared (g)</label>
-            <input type="number" step="0.1" name="quantity_prepared_g" required>
+            <input type="number" step="0.1" min="0" name="quantity_prepared_g" required>
 
             <label>Quantity Consumed (g)</label>
-            <input type="number" step="0.1" name="quantity_consumed_g" required>
+            <input type="number" step="0.1" min="0" name="quantity_consumed_g" required>
 
             <label>Quantity Wasted (g)</label>
-            <input type="number" step="0.1" name="quantity_wasted_g" required>
+            <input type="number" step="0.1" min="0" name="quantity_wasted_g" required>
 
             <label>People Count</label>
-            <input type="number" name="people_count" required>
+            <input type="number" min="1" name="people_count" required>
 
             <label>Food Type</label>
             <select name="food_type" required>
@@ -454,16 +570,16 @@
             </select>
 
             <label>Quantity Prepared (kg)</label>
-            <input type="number" step="0.1" name="quantity_prepared_kg" required>
+            <input type="number" step="0.1" min="0" name="quantity_prepared_kg" required>
 
             <label>Quantity Consumed (kg)</label>
-            <input type="number" step="0.1" name="quantity_consumed_kg" required>
+            <input type="number" step="0.1" min="0" name="quantity_consumed_kg" required>
 
             <label>Students Present</label>
-            <input type="number" name="students_present" required>
+            <input type="number" min="0" name="students_present" required>
 
             <label>Students Registered</label>
-            <input type="number" name="students_registered" required>
+            <input type="number" min="0" name="students_registered" required>
 
             <label>Food Type</label>
             <select name="food_type" required>
@@ -478,7 +594,7 @@
             <input type="text" name="type_of_food" placeholder="e.g. Rice, Biryani" required>
 
             <label>Number of Guests</label>
-            <input type="number" name="num_guests" required>
+            <input type="number" min="0" name="num_guests" required>
 
             <label>Event Type</label>
             <select name="event_type" required>
@@ -490,10 +606,11 @@
             </select>
 
             <label>Quantity of Food (kg)</label>
-            <input type="number" step="0.1" name="quantity_food" required>
+            <input type="number" step="0.1" min="0" name="quantity_food" required>
 
             <label>Storage Conditions</label>
             <select name="storage_condition" required>
+                <option value="">Select Storage Condition</option>
                 <option>Refrigerated</option>
                 <option>Room Temperature</option>
                 <option>No Storage</option>
@@ -501,6 +618,7 @@
 
             <label>Purchase History</label>
             <select name="purchase_history" required>
+                <option value="">Select Purchase Type</option>
                 <option>Bulk Purchase</option>
                 <option>Moderate Purchase</option>
                 <option>Just-in-Time</option>
@@ -508,6 +626,7 @@
 
             <label>Seasonality</label>
             <select name="seasonality" required>
+                <option value="">Select Season</option>
                 <option>Summer</option>
                 <option>Winter</option>
                 <option>Monsoon</option>
@@ -516,6 +635,7 @@
 
             <label>Preparation Method</label>
             <select name="prep_method" required>
+                <option value="">Select Method</option>
                 <option>Freshly Cooked</option>
                 <option>Pre-cooked</option>
                 <option>Frozen & Reheated</option>
@@ -526,9 +646,11 @@
             <input type="text" name="location" placeholder="e.g. Urban / Delhi" required>
 
             <label>Pricing (₹ per plate)</label>
-            <input type="number" step="0.1" name="pricing" required>
+            <input type="number" step="0.1" min="0" name="pricing" required>
 
             {% endif %}
+
+            <div class="error" id="errorMessage"></div>
 
             <button type="submit">Predict</button>
         </form>
@@ -541,7 +663,226 @@
         {% endif %}
 
     </div>
+
+    <div class="chart-container" id="chartContainer">
+        <h2 class="chart-title">📊 Wastage Analytics</h2>
+        <canvas id="wastageChart"></canvas>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total Predictions</div>
+                <div class="stat-value" id="totalPredictions">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Avg Wastage</div>
+                <div class="stat-value" id="avgWastage">0%</div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<script>
+    // Store predictions in localStorage
+    const STORAGE_KEY = 'foodWastagePredictions';
+    let chart = null;
+
+    // Get predictions from localStorage
+    function getPredictions() {
+        const data = localStorage.getItem(STORAGE_KEY);
+        return data ? JSON.parse(data) : [];
+    }
+
+    // Save prediction to localStorage
+    function savePrediction(prediction) {
+        const predictions = getPredictions();
+        predictions.push({
+            ...prediction,
+            timestamp: new Date().toISOString()
+        });
+        
+        // Keep only last 10 predictions
+        if (predictions.length > 10) {
+            predictions.shift();
+        }
+        
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(predictions));
+        updateChart();
+    }
+
+    // Create/Update chart
+    function updateChart() {
+        const predictions = getPredictions();
+        
+        if (predictions.length === 0) {
+            document.getElementById('chartContainer').classList.remove('show');
+            return;
+        }
+
+        document.getElementById('chartContainer').classList.add('show');
+
+        const labels = predictions.map((p, i) => `#${i + 1}`);
+        const data = predictions.map(p => parseFloat(p.wastagePercentage) || 0);
+
+        const ctx = document.getElementById('wastageChart').getContext('2d');
+
+        if (chart) {
+            chart.destroy();
+        }
+
+        // Determine color based on body class
+        const bodyClass = document.body.className;
+        let primaryColor, secondaryColor;
+        
+        if (bodyClass.includes('hotel-bg')) {
+            primaryColor = 'rgba(59, 130, 246, 0.8)';
+            secondaryColor = 'rgba(59, 130, 246, 0.2)';
+        } else if (bodyClass.includes('home-bg')) {
+            primaryColor = 'rgba(59, 130, 246, 0.8)';
+            secondaryColor = 'rgba(59, 130, 246, 0.2)';
+        } else if (bodyClass.includes('mess-bg')) {
+            primaryColor = 'rgba(251, 146, 60, 0.8)';
+            secondaryColor = 'rgba(251, 146, 60, 0.2)';
+        } else {
+            primaryColor = 'rgba(234, 179, 8, 0.8)';
+            secondaryColor = 'rgba(234, 179, 8, 0.2)';
+        }
+
+        chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Wastage %',
+                    data: data,
+                    borderColor: primaryColor,
+                    backgroundColor: secondaryColor,
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 6,
+                    pointHoverRadius: 8,
+                    pointBackgroundColor: primaryColor,
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(20, 25, 35, 0.95)',
+                        titleColor: '#e5e7eb',
+                        bodyColor: '#d1d5db',
+                        borderColor: 'rgba(255, 255, 255, 0.1)',
+                        borderWidth: 1,
+                        padding: 12,
+                        displayColors: false,
+                        callbacks: {
+                            label: function(context) {
+                                return 'Wastage: ' + context.parsed.y.toFixed(2) + '%';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            color: '#9ca3af',
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.05)'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: '#9ca3af'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.05)'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Update stats
+        document.getElementById('totalPredictions').textContent = predictions.length;
+        const avgWastage = data.reduce((a, b) => a + b, 0) / data.length;
+        document.getElementById('avgWastage').textContent = avgWastage.toFixed(1) + '%';
+    }
+
+    // Form validation
+    document.getElementById('predictionForm').addEventListener('submit', function(e) {
+        const errorMessage = document.getElementById('errorMessage');
+        errorMessage.classList.remove('show');
+
+        // Custom validation logic
+        const quantityPrepared = parseFloat(this.querySelector('[name*="quantity_prepared"]')?.value || 0);
+        const quantityConsumed = parseFloat(this.querySelector('[name*="quantity_consumed"]')?.value || 0);
+        const quantityWasted = parseFloat(this.querySelector('[name*="quantity_wasted"]')?.value || 0);
+
+        if (quantityPrepared > 0 && quantityConsumed > 0) {
+            if (quantityConsumed > quantityPrepared) {
+                e.preventDefault();
+                errorMessage.textContent = 'Quantity consumed cannot be greater than quantity prepared!';
+                errorMessage.classList.add('show');
+                return;
+            }
+
+            if (quantityWasted > 0 && quantityWasted > quantityPrepared) {
+                e.preventDefault();
+                errorMessage.textContent = 'Quantity wasted cannot be greater than quantity prepared!';
+                errorMessage.classList.add('show');
+                return;
+            }
+
+            if ((quantityConsumed + quantityWasted) > quantityPrepared * 1.1) {
+                e.preventDefault();
+                errorMessage.textContent = 'Consumed + Wasted exceeds prepared quantity!';
+                errorMessage.classList.add('show');
+                return;
+            }
+        }
+
+        // For Mess - validate students
+        const studentsPresent = parseFloat(this.querySelector('[name="students_present"]')?.value || 0);
+        const studentsRegistered = parseFloat(this.querySelector('[name="students_registered"]')?.value || 0);
+
+        if (studentsPresent > 0 && studentsRegistered > 0 && studentsPresent > studentsRegistered) {
+            e.preventDefault();
+            errorMessage.textContent = 'Students present cannot be greater than students registered!';
+            errorMessage.classList.add('show');
+            return;
+        }
+    });
+
+    // Initialize chart on page load
+    window.addEventListener('load', function() {
+        updateChart();
+
+        // If there's a result, extract wastage percentage and save
+        {% if result %}
+        const resultText = "{{ result }}";
+        const wastageMatch = resultText.match(/(\d+\.?\d*)%/);
+        if (wastageMatch) {
+            const prediction = {
+                place: "{{ place }}",
+                wastagePercentage: wastageMatch[1],
+                result: resultText
+            };
+            savePrediction(prediction);
+        }
+        {% endif %}
+    });
+</script>
 
 </body>
 </html>
