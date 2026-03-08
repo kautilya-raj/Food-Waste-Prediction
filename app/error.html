@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}FoodWise — Error{% endblock %}
+{% block content %}
+<div class="error-page">
+  <div class="error-icon">⚠️</div>
+  <h1>Something Went Wrong</h1>
+  <p class="error-msg">{{ message }}</p>
+  {% if action_url %}
+  <a href="{{ action_url }}" class="btn-primary">{{ action_label or 'Try Again' }}</a>
+  {% endif %}
+  <a href="{{ url_for('index') }}" class="btn-secondary">← Home</a>
+</div>
+{% endblock %}

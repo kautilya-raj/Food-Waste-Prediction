@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FoodWise — Reduce Food Waste with AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="landing-body">
+
+  <!-- Animated background grid -->
+  <div class="bg-grid"></div>
+  <div class="bg-glow glow-1"></div>
+  <div class="bg-glow glow-2"></div>
+
+  <nav class="landing-nav">
+    <div class="nav-brand">
+      <span class="brand-dot"></span>
+      <span class="brand-name">FoodWise</span>
+    </div>
+    <div class="nav-links">
+      <a href="{{ url_for('about') }}" class="btn-nav-ghost-plain">About</a>
+      <a href="{{ url_for('train_upload_page') }}" class="btn-nav-ghost">Train with Data</a>
+      <a href="{{ url_for('index') }}" class="btn-nav-primary">Dashboard →</a>
+    </div>
+  </nav>
+
+  <section class="landing-hero">
+    <div class="landing-badge">
+      <span class="badge-dot"></span>
+      AI-Powered Prediction
+    </div>
+
+    <h1 class="landing-title">
+      Reduce Food Waste<br>
+      <span class="title-accent">Before It Happens</span>
+    </h1>
+
+    <p class="landing-sub">
+      Predict food waste for hostels, hotels, weddings and households.<br>
+      Get actionable insights powered by machine learning.
+    </p>
+
+    <div class="landing-cta">
+      <a href="{{ url_for('index') }}" class="btn-letsgo">
+        <span>Let's Go</span>
+        <span class="btn-arrow">→</span>
+      </a>
+      <a href="{{ url_for('train_upload_page') }}" class="btn-letsgo-ghost">
+        Train with Your Data
+      </a>
+    </div>
+
+    <div class="landing-stats">
+      <div class="lstat">
+        <div class="lstat-num">4</div>
+        <div class="lstat-label">Venue Types</div>
+      </div>
+      <div class="lstat-divider"></div>
+      <div class="lstat">
+        <div class="lstat-num">3+</div>
+        <div class="lstat-label">ML Models</div>
+      </div>
+      <div class="lstat-divider"></div>
+      <div class="lstat">
+        <div class="lstat-num">~90%</div>
+        <div class="lstat-label">Accuracy (R²)</div>
+      </div>
+      <div class="lstat-divider"></div>
+      <div class="lstat">
+        <div class="lstat-num">∞</div>
+        <div class="lstat-label">CSV Datasets</div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // Parallax glow on mouse move
+    document.addEventListener("mousemove", e => {
+      const x = e.clientX / window.innerWidth;
+      const y = e.clientY / window.innerHeight;
+      document.querySelector(".glow-1").style.transform =
+        `translate(${x * 40 - 20}px, ${y * 40 - 20}px)`;
+      document.querySelector(".glow-2").style.transform =
+        `translate(${-x * 30 + 15}px, ${-y * 30 + 15}px)`;
+    });
+  </script>
+</body>
+</html>

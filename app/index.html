@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}FoodWise — Home{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div class="hero-eyebrow">AI-Powered Prediction</div>
+  <h1 class="hero-title">Reduce Food Waste<br><span class="highlight">Before It Happens</span></h1>
+  <p class="hero-subtitle">
+    Select your venue type to get an accurate food waste prediction
+    and actionable tips powered by machine learning.
+  </p>
+  <div class="hero-stats">
+    <div class="stat"><span class="stat-num">4</span><span class="stat-label">Venue Types</span></div>
+    <div class="stat"><span class="stat-num">3+</span><span class="stat-label">ML Models</span></div>
+    <div class="stat"><span class="stat-num">~90%</span><span class="stat-label">Accuracy (R²)</span></div>
+  </div>
+</section>
+
+<section class="venue-section">
+  <h2 class="section-title">Choose Your Venue</h2>
+  <div class="venue-grid">
+    {% for vt in venue_types %}
+    {% set meta = venue_meta[vt] %}
+    {% set minfo = model_status[vt] %}
+    <a href="{{ url_for('predict_form', venue_type=vt) }}" class="venue-card" style="--accent: {{ meta.color }}">
+      <div class="card-icon">{{ meta.icon }}</div>
+      <h3 class="card-title">{{ meta.label }}</h3>
+      <div class="card-badge {% if minfo.loaded %}badge-ready{% else %}badge-warn{% endif %}">
+        {% if minfo.loaded %}
+          ✓ Model Ready
+          {% if minfo.metrics %}· R² {{ minfo.metrics.R2 }}{% endif %}
+        {% else %}
+          ⚠ Not Trained
+        {% endif %}
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="how-it-works">
+  <h2 class="section-title">How It Works</h2>
+  <div class="steps-grid">
+    <div class="step">
+      <div class="step-num">01</div>
+      <h4>Select Venue</h4>
+      <p>Choose from hostel, hotel, wedding or household.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <h4>Enter Details</h4>
+      <p>Fill in guest count, meal type, season, and more.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <h4>Get Prediction</h4>
+      <p>Our ML model predicts expected food waste in kg.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">04</div>
+      <h4>Take Action</h4>
+      <p>Follow tailored tips to reduce waste and save money.</p>
+    </div>
+  </div>
+</section>
+{% endblock %}

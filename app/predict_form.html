@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}FoodWise — {{ meta.label }} Prediction{% endblock %}
+
+{% block content %}
+<div class="form-page">
+  <div class="form-header" style="--accent: {{ meta.color }}">
+    <a href="{{ url_for('index') }}" class="back-link">← Back</a>
+    <div class="form-icon">{{ meta.icon }}</div>
+    <h1>{{ meta.label }}</h1>
+    <p>Fill in the details to predict expected food waste</p>
+    {% if not model_info.loaded %}
+    <div class="alert alert-warn">
+      ⚠️ Model not trained yet.
+      <a href="{{ url_for('train_models') }}">Train now</a> before predicting.
+    </div>
+    {% endif %}
+  </div>
+
+  {% if error %}
+  <div class="alert alert-error">❌ {{ error }}</div>
+  {% endif %}
+
+  <form class="predict-form" method="POST" action="{{ url_for('predict_submit', venue_type=venue_type) }}" novalidate>
+    <div class="fields-grid">
+      {% for (field, dtype, choices, lo, hi) in field_specs %}
+      <div class="field-group">
+        <label for="{{ field }}">{{ field.replace('_', ' ').title() }}
+          {% if lo is not none and hi is not none %}
+          <span class="field-hint">({{ lo }} – {{ hi }})</span>
+          {% endif %}
+        </label>
+
+        {% if choices %}
+        <select id="{{ field }}" name="{{ field }}" required>
+          <option value="">— select —</option>
+          {% for ch in choices %}
+          <option value="{{ ch }}"
+            {% if form_data and form_data.get(field) == ch %}selected{% endif %}>
+            {{ ch.replace('_', ' ').title() }}
+          </option>
+          {% endfor %}
+        </select>
+
+        {% elif dtype == 'int' %}
+        <input type="number" id="{{ field }}" name="{{ field }}"
+          min="{{ lo or 0 }}" max="{{ hi or '' }}" step="1"
+          value="{{ form_data.get(field, '') if form_data else '' }}"
+          placeholder="e.g. {{ ((lo or 0) + (hi or 100)) // 2 }}" required />
+
+        {% else %}
+        <input type="number" id="{{ field }}" name="{{ field }}"
+          min="{{ lo or 0 }}" max="{{ hi or '' }}" step="0.1"
+          value="{{ form_data.get(field, '') if form_data else '' }}"
+          placeholder="e.g. {{ ((lo or 0) + (hi or 10)) / 2 }}" required />
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+
+    <button type="submit" class="btn-predict" {% if not model_info.loaded %}disabled{% endif %}>
+      🔮 Predict Food Waste
+    </button>
+  </form>
+</div>
+{% endblock %}

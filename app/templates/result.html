@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}FoodWise — Prediction Result{% endblock %}
+
+{% block content %}
+<div class="result-page">
+  <a href="{{ url_for('predict_form', venue_type=venue_type) }}" class="back-link">← New Prediction</a>
+
+  <div class="result-hero" style="--accent: {{ meta.color }}">
+    <div class="result-icon">{{ meta.icon }}</div>
+    <div class="result-label">Predicted Food Waste</div>
+    <div class="result-value">{{ result.prediction_kg }} <span class="result-unit">kg</span></div>
+    <div class="result-sub">{{ meta.label }} · Model: {{ result.model_name }} · R² {{ result.r2_score }}</div>
+
+    {% set waste = result.prediction_kg %}
+    {% if waste < 5 %}
+    <div class="waste-meter low">🟢 Low Waste Level</div>
+    {% elif waste < 20 %}
+    <div class="waste-meter medium">🟡 Moderate Waste Level</div>
+    {% elif waste < 50 %}
+    <div class="waste-meter high">🟠 High Waste Level</div>
+    {% else %}
+    <div class="waste-meter critical">🔴 Critical Waste Level</div>
+    {% endif %}
+  </div>
+
+  <div class="result-body">
+    <div class="result-inputs">
+      <h3>Your Inputs</h3>
+      <table class="inputs-table">
+        {% for k, v in inputs.items() %}
+        <tr>
+          <td class="input-key">{{ k.replace('_', ' ').title() }}</td>
+          <td class="input-val">{{ v }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+    </div>
+
+    <div class="result-tips">
+      <h3>💡 Reduction Tips</h3>
+      <ul class="tips-list">
+        {% for tip in result.tips %}
+        <li class="tip-item">{{ tip }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  <div class="result-actions">
+    <a href="{{ url_for('predict_form', venue_type=venue_type) }}" class="btn-secondary">Try Another</a>
+    <a href="{{ url_for('index') }}" class="btn-primary">Back to Home</a>
+  </div>
+</div>
+{% endblock %}

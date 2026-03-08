@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}FoodWise — Training Complete{% endblock %}
+
+{% block content %}
+<div class="result-page">
+  <a href="{{ url_for('train_upload_page') }}" class="back-link">← Train Another Model</a>
+
+  <div class="result-hero" style="--accent: {{ meta.color }}">
+    <div class="result-icon">{{ meta.icon }}</div>
+    <div class="result-label">Training Complete</div>
+    <div class="result-value" style="font-size:3rem">{{ result.metrics.R2 }} <span class="result-unit">R²</span></div>
+    <div class="result-sub">
+      {{ meta.label }} · {{ result.n_rows }} rows · Best model: <strong>{{ result.best_model_name }}</strong>
+    </div>
+    {% if result.metrics.R2 >= 0.85 %}
+      <div class="waste-meter low">🟢 Excellent fit</div>
+    {% elif result.metrics.R2 >= 0.65 %}
+      <div class="waste-meter medium">🟡 Good fit</div>
+    {% else %}
+      <div class="waste-meter high">🟠 Moderate fit — consider more data or feature engineering</div>
+    {% endif %}
+  </div>
+
+  <div class="result-body">
+
+    <div class="result-inputs">
+      <h3>Best Model Metrics</h3>
+      <table class="inputs-table">
+        <tr><td class="input-key">Best Model</td><td class="input-val"><strong>{{ result.best_model_name }}</strong></td></tr>
+        <tr><td class="input-key">R² Score</td><td class="input-val">{{ result.metrics.R2 }}</td></tr>
+        <tr><td class="input-key">MAE (kg)</td><td class="input-val">{{ result.metrics.MAE }}</td></tr>
+        <tr><td class="input-key">RMSE (kg)</td><td class="input-val">{{ result.metrics.RMSE }}</td></tr>
+        <tr><td class="input-key">Training Rows</td><td class="input-val">{{ result.n_rows }}</td></tr>
+      </table>
+    </div>
+
+    <div class="result-tips">
+      <h3>📊 All Model Scores</h3>
+      <table class="inputs-table">
+        {% for name, m in result.all_results.items() %}
+        <tr>
+          <td class="input-key">
+            {% if name == result.best_model_name %}⭐{% endif %} {{ name }}
+          </td>
+          <td class="input-val">R² {{ m.R2 }} &nbsp; MAE {{ m.MAE }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+      <div class="tip-item" style="margin-top:1rem">
+        💾 The best model has been saved and is now active for predictions.
+      </div>
+    </div>
+
+  </div>
+
+  <div class="result-actions">
+    <a href="{{ url_for('predict_form', venue_type=result.venue_type) }}" class="btn-primary">
+      🔮 Start Predicting
+    </a>
+    <a href="{{ url_for('train_upload_page') }}" class="btn-secondary">Train Another</a>
+  </div>
+</div>
+{% endblock %}

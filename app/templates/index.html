@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}FoodWise — Choose Your Venue{% endblock %}
+
+{% block content %}
+<section class="dash-hero">
+  <div class="dash-eyebrow">Step 1 of 2</div>
+  <h1 class="dash-title">Choose Your Venue</h1>
+  <p class="dash-sub">Select the type of venue to get a tailored food waste prediction.</p>
+</section>
+
+<section class="venue-section">
+  <div class="venue-grid">
+    {% for vt in venue_types %}
+    {% set meta = venue_meta[vt] %}
+    {% set minfo = model_status[vt] %}
+    <a href="{{ url_for('predict_form', venue_type=vt) }}" class="venue-card" style="--accent: {{ meta.color }}">
+      <div class="card-glow" style="background: {{ meta.color }}"></div>
+      <div class="card-img-wrap">
+        <img src="{{ url_for('static', filename='images/' + meta.image) }}"
+             alt="{{ meta.label }}" class="card-img"
+             onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
+        <div class="card-img-fallback" style="display:none">{{ meta.icon }}</div>
+      </div>
+      <h3 class="card-title">{{ meta.label }}</h3>
+      <p class="card-desc">
+        {% if vt == "hostel" %}Student mess & dormitory dining predictions{% endif %}
+        {% if vt == "hotel" %}Restaurant & hospitality event waste{% endif %}
+        {% if vt == "wedding" %}Large-scale catering & banquet waste{% endif %}
+        {% if vt == "household" %}Daily household cooking waste{% endif %}
+      </p>
+      <div class="card-footer">
+        <div class="card-badge {% if minfo.loaded %}badge-ready{% else %}badge-warn{% endif %}">
+          {% if minfo.loaded %}✓ Ready {% if minfo.metrics %}· R² {{ minfo.metrics.R2 }}{% endif %}
+          {% else %}⚠ Not trained{% endif %}
+        </div>
+        <div class="card-arrow">→</div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="how-it-works">
+  <h2 class="section-title">How It Works</h2>
+  <div class="steps-grid">
+    <div class="step">
+      <div class="step-num">01</div>
+      <h4>Select Venue</h4>
+      <p>Choose from hostel, hotel, wedding or household to get started.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <h4>Enter Details</h4>
+      <p>Fill in guest count, meal type, season and event specifics.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <h4>Get Prediction</h4>
+      <p>Our ensemble ML model predicts expected food waste in kg.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">04</div>
+      <h4>Take Action</h4>
+      <p>Follow personalised tips to cut waste and save money.</p>
+    </div>
+  </div>
+</section>
+{% endblock %}

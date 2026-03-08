@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}FoodWise — Training Complete{% endblock %}
+
+{% block content %}
+<div class="train-page">
+  <h1>🤖 Model Training Complete</h1>
+  <p class="train-subtitle">All four venue models have been trained and saved.</p>
+
+  <div class="train-grid">
+    {% for vt, info in summary.items() %}
+    {% set meta = venue_meta[vt] %}
+    <div class="train-card {% if info.get('error') %}train-error{% else %}train-ok{% endif %}">
+      <div class="train-icon">{{ meta.icon }}</div>
+      <h3>{{ meta.label }}</h3>
+      {% if info.get('error') %}
+        <div class="badge badge-error">✗ Failed</div>
+        <p class="error-msg">{{ info.error }}</p>
+      {% else %}
+        <div class="badge badge-ok">✓ Success</div>
+        <table class="metrics-table">
+          <tr><td>Best Model</td><td><strong>{{ info.best_model_name }}</strong></td></tr>
+          {% for k, v in info.metrics.items() %}
+          <tr><td>{{ k }}</td><td>{{ v }}</td></tr>
+          {% endfor %}
+        </table>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="train-actions">
+    <a href="{{ url_for('index') }}" class="btn-primary">← Back to Home</a>
+  </div>
+</div>
+{% endblock %}

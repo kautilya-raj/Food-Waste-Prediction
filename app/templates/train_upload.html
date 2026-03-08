@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% block title %}FoodWise — Train with Your Dataset{% endblock %}
+
+{% block content %}
+<div class="upload-page">
+
+  <div class="upload-header">
+    <a href="{{ url_for('index') }}" class="back-link">← Back to Home</a>
+    <div class="upload-icon">📂</div>
+    <h1>Train with Your Dataset</h1>
+    <p>Upload a CSV file to train a model on your own real-world data.</p>
+  </div>
+
+  {% if error %}
+  <div class="alert alert-error">❌ {{ error }}</div>
+  {% endif %}
+
+  <div class="upload-body">
+
+    <!-- ── Upload Form ── -->
+    <div class="upload-form-card">
+      <form class="upload-form" method="POST" action="{{ url_for('train_upload_submit') }}" enctype="multipart/form-data">
+
+        <div class="field-group">
+          <label for="venue_type">1. Select Venue Type</label>
+          <select id="venue_type" name="venue_type" required onchange="updateSchema(this.value)">
+            <option value="">— choose venue —</option>
+            {% for vt in venue_types %}
+            <option value="{{ vt }}">{{ venue_meta[vt].icon }} {{ venue_meta[vt].label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="field-group">
+          <label for="csv_file">2. Upload CSV File</label>
+          <div class="file-drop" id="fileDrop">
+            <input type="file" id="csv_file" name="csv_file" accept=".csv" required />
+            <div class="drop-content">
+              <span class="drop-icon">📄</span>
+              <span class="drop-text">Drag & drop your CSV here, or <strong>click to browse</strong></span>
+              <span class="drop-hint">Only .csv files accepted</span>
+            </div>
+          </div>
+          <div class="file-chosen" id="fileChosen" style="display:none">
+            <span class="file-icon">✅</span>
+            <span id="fileChosenName"></span>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-predict" id="trainBtn" disabled>
+          🚀 Train Model
+        </button>
+      </form>
+    </div>
+
+    <!-- ── Schema Reference ── -->
+    <div class="schema-card">
+      <h3>📋 Required CSV Columns</h3>
+      <p class="schema-intro">Select a venue type to see the required columns for your CSV.</p>
+
+      {% for vt, specs in field_specs.items() %}
+      <div class="schema-table-wrap" id="schema-{{ vt }}" style="display:none">
+        <div class="schema-badge" style="background: {{ venue_meta[vt].color }}20; color: {{ venue_meta[vt].color }}">
+          {{ venue_meta[vt].icon }} {{ venue_meta[vt].label }}
+        </div>
+        <table class="schema-table">
+          <thead><tr><th>Column</th><th>Type</th><th>Values / Range</th></tr></thead>
+          <tbody>
+            {% for (field, dtype, choices, lo, hi) in specs %}
+            <tr>
+              <td><code>{{ field }}</code></td>
+              <td>{{ dtype }}</td>
+              <td>
+                {% if choices %}{{ choices | join(', ') }}
+                {% elif lo is not none and hi is not none %}{{ lo }} – {{ hi }}
+                {% else %}any{% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+            <tr class="target-row">
+              <td><code>food_waste_kg</code></td>
+              <td>float</td>
+              <td>≥ 0 &nbsp;<span class="target-badge">TARGET</span></td>
+            </tr>
+          </tbody>
+        </table>
+        <a href="{{ url_for('download_sample_csv', venue_type=vt) }}" class="btn-sample">
+          ⬇ Download Sample CSV
+        </a>
+      </div>
+      {% endfor %}
+
+      <div id="schema-placeholder" class="schema-placeholder">
+        ← Select a venue type to see the column schema
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Current Model Status ── -->
+  <div class="status-section">
+    <h3>Current Model Status</h3>
+    <div class="status-grid">
+      {% for vt in venue_types %}
+      {% set m = model_status[vt] %}
+      <div class="status-card">
+        <span class="status-icon">{{ venue_meta[vt].icon }}</span>
+        <span class="status-label">{{ venue_meta[vt].label }}</span>
+        {% if m.loaded %}
+        <span class="badge badge-ready">✓ R² {{ m.metrics.R2 }}</span>
+        {% else %}
+        <span class="badge badge-warn">Not trained</span>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+
+<script>
+function updateSchema(vt) {
+  document.querySelectorAll('[id^="schema-"]').forEach(el => el.style.display = 'none');
+  document.getElementById('schema-placeholder').style.display = 'none';
+  if (vt) {
+    const el = document.getElementById('schema-' + vt);
+    if (el) el.style.display = 'block';
+    checkReady();
+  } else {
+    document.getElementById('schema-placeholder').style.display = 'block';
+  }
+}
+
+function checkReady() {
+  const vt   = document.getElementById('venue_type').value;
+  const file = document.getElementById('csv_file').files.length > 0;
+  document.getElementById('trainBtn').disabled = !(vt && file);
+}
+
+document.getElementById('csv_file').addEventListener('change', function() {
+  if (this.files.length > 0) {
+    document.getElementById('fileChosen').style.display = 'flex';
+    document.getElementById('fileChosenName').textContent = this.files[0].name;
+    document.querySelector('.drop-content').style.display = 'none';
+  }
+  checkReady();
+});
+
+// Drag and drop
+const drop = document.getElementById('fileDrop');
+drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('drag-over'); });
+drop.addEventListener('dragleave', () => drop.classList.remove('drag-over'));
+drop.addEventListener('drop', e => {
+  e.preventDefault(); drop.classList.remove('drag-over');
+  const dt = e.dataTransfer;
+  if (dt.files.length) {
+    document.getElementById('csv_file').files = dt.files;
+    document.getElementById('fileChosen').style.display = 'flex';
+    document.getElementById('fileChosenName').textContent = dt.files[0].name;
+    document.querySelector('.drop-content').style.display = 'none';
+    checkReady();
+  }
+});
+
+document.getElementById('trainBtn').addEventListener('click', function() {
+  if (!this.disabled) {
+    this.textContent = '⏳ Training… please wait';
+    this.disabled = true;
+  }
+});
+</script>
+{% endblock %}

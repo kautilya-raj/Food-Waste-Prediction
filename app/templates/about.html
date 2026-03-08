@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+{% block title %}FoodWise — About{% endblock %}
+
+{% block content %}
+<div class="about-page">
+
+  <div class="about-hero">
+    <div class="dash-eyebrow">Under the Hood</div>
+    <h1 class="dash-title">About FoodWise</h1>
+    <p class="dash-sub">Everything powering the predictions — models, data, stack, and methodology.</p>
+  </div>
+
+  <!-- Model Cards -->
+  <section class="about-section">
+    <h2 class="about-section-title">
+      <span class="section-icon">🤖</span> Machine Learning Models
+    </h2>
+    <div class="about-grid-3">
+
+      <div class="about-card accent-green">
+        <div class="about-card-icon">🌲</div>
+        <h3>Random Forest</h3>
+        <p>An ensemble of decision trees trained with bagging. Robust to outliers and handles non-linear relationships well. Used as a strong baseline for all venue types.</p>
+        <div class="tag-row">
+          <span class="tag">n_estimators=200</span>
+          <span class="tag">max_depth=10</span>
+          <span class="tag">n_jobs=-1</span>
+        </div>
+      </div>
+
+      <div class="about-card accent-blue">
+        <div class="about-card-icon">📈</div>
+        <h3>Gradient Boosting</h3>
+        <p>Sequential ensemble that corrects errors from previous trees. Excellent at capturing complex patterns. Uses a low learning rate with many estimators for precision.</p>
+        <div class="tag-row">
+          <span class="tag">n_estimators=200</span>
+          <span class="tag">lr=0.05</span>
+          <span class="tag">max_depth=4</span>
+        </div>
+      </div>
+
+      <div class="about-card accent-amber">
+        <div class="about-card-icon">📐</div>
+        <h3>Ridge Regression</h3>
+        <p>L2-regularised linear model. Fast, interpretable, and surprisingly strong when features are well-engineered. Often wins on smaller or cleaner datasets.</p>
+        <div class="tag-row">
+          <span class="tag">alpha=1.0</span>
+          <span class="tag">linear</span>
+          <span class="tag">L2 penalty</span>
+        </div>
+      </div>
+
+      <div class="about-card accent-purple">
+        <div class="about-card-icon">🗳️</div>
+        <h3>Voting Ensemble</h3>
+        <p>Soft average of all three models. Only deployed if its R² beats every individual model. Reduces variance and improves generalisation across venue types.</p>
+        <div class="tag-row">
+          <span class="tag">VotingRegressor</span>
+          <span class="tag">averaging</span>
+          <span class="tag">auto-selected</span>
+        </div>
+      </div>
+
+      <div class="about-card accent-green">
+        <div class="about-card-icon">🏆</div>
+        <h3>Auto Model Selection</h3>
+        <p>All four models are trained per venue type. The one with the highest R² on a held-out 20% test split is automatically saved and used for live predictions.</p>
+        <div class="tag-row">
+          <span class="tag">test_size=0.2</span>
+          <span class="tag">random_state=42</span>
+          <span class="tag">best R² wins</span>
+        </div>
+      </div>
+
+      <div class="about-card accent-blue">
+        <div class="about-card-icon">📊</div>
+        <h3>Evaluation Metrics</h3>
+        <p>Every model is evaluated on three metrics to give a complete picture of performance across all venue types.</p>
+        <div class="tag-row">
+          <span class="tag">R² Score</span>
+          <span class="tag">MAE</span>
+          <span class="tag">RMSE</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Venue Models -->
+  <section class="about-section">
+    <h2 class="about-section-title">
+      <span class="section-icon">🏢</span> Venue-Specific Models
+    </h2>
+    <div class="about-grid-4">
+      {% for vt, meta in venue_meta.items() %}
+      <div class="venue-stat-card">
+        <div class="vscard-icon">{{ meta.icon }}</div>
+        <div class="vscard-label">{{ meta.label }}</div>
+        {% if model_status[vt].loaded %}
+        <div class="vscard-metrics">
+          <div class="vsm"><span>Model</span><strong>{{ model_status[vt].model_name }}</strong></div>
+          <div class="vsm"><span>R²</span><strong class="green">{{ model_status[vt].metrics.R2 }}</strong></div>
+          <div class="vsm"><span>MAE</span><strong>{{ model_status[vt].metrics.MAE }} kg</strong></div>
+          <div class="vsm"><span>RMSE</span><strong>{{ model_status[vt].metrics.RMSE }} kg</strong></div>
+        </div>
+        <div class="badge badge-ok" style="margin-top:.8rem">✓ Trained</div>
+        {% else %}
+        <div class="badge badge-error" style="margin-top:.8rem">Not trained</div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- Preprocessing -->
+  <section class="about-section">
+    <h2 class="about-section-title">
+      <span class="section-icon">⚙️</span> Data Pipeline
+    </h2>
+    <div class="pipeline-steps">
+      <div class="pipe-step">
+        <div class="pipe-num">1</div>
+        <h4>Data Generation / Upload</h4>
+        <p>Train on synthetic data (2,000 rows per venue) generated with realistic distributions, or upload your own CSV dataset.</p>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step">
+        <div class="pipe-num">2</div>
+        <h4>Label Encoding</h4>
+        <p>Categorical features (meal type, season, day of week) are label-encoded per column with unseen-label handling.</p>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step">
+        <div class="pipe-num">3</div>
+        <h4>Standard Scaling</h4>
+        <p>All features are standardised (zero mean, unit variance) using sklearn's StandardScaler before model training.</p>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step">
+        <div class="pipe-num">4</div>
+        <h4>Train / Test Split</h4>
+        <p>80% training, 20% test split with a fixed random seed (42) for reproducibility across all venue types.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tech Stack -->
+  <section class="about-section">
+    <h2 class="about-section-title">
+      <span class="section-icon">🛠️</span> Tech Stack
+    </h2>
+    <div class="about-grid-3">
+
+      <div class="stack-card">
+        <div class="stack-logo">🐍</div>
+        <h4>Python 3.10+</h4>
+        <p>Core language for all ML, data processing, and backend logic.</p>
+      </div>
+
+      <div class="stack-card">
+        <div class="stack-logo">🌶️</div>
+        <h4>Flask 3.0</h4>
+        <p>Lightweight web framework serving the UI and REST API endpoints.</p>
+      </div>
+
+      <div class="stack-card">
+        <div class="stack-logo">🔬</div>
+        <h4>scikit-learn 1.5</h4>
+        <p>RandomForest, GradientBoosting, Ridge, VotingRegressor, StandardScaler, LabelEncoder.</p>
+      </div>
+
+      <div class="stack-card">
+        <div class="stack-logo">🐼</div>
+        <h4>pandas 2.2</h4>
+        <p>DataFrame operations, CSV parsing, feature selection and preprocessing.</p>
+      </div>
+
+      <div class="stack-card">
+        <div class="stack-logo">🔢</div>
+        <h4>NumPy 1.26</h4>
+        <p>Numerical operations, synthetic data generation with default_rng.</p>
+      </div>
+
+      <div class="stack-card">
+        <div class="stack-logo">💾</div>
+        <h4>Pickle</h4>
+        <p>Model serialisation — bundles model + preprocessor + metadata into a single .pkl file per venue.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Project Structure -->
+  <section class="about-section">
+    <h2 class="about-section-title">
+      <span class="section-icon">📁</span> Project Structure
+    </h2>
+    <div class="code-block">
+      <pre>food-waste-prediction/
+├── src/
+│   ├── preprocessing.py   ← Feature encoding, scaling, synthetic data
+│   ├── training.py        ← Multi-model training + ensemble selection
+│   ├── inference.py       ← Prediction + contextual tip generation
+│   └── utils.py           ← Logging, input validation, field specs
+├── app/
+│   ├── app.py             ← Flask routes (web UI + REST API)
+│   ├── templates/         ← Jinja2 HTML templates
+│   └── static/            ← CSS, JS, images
+├── models/                ← Saved .pkl model bundles
+├── data/                  ← Your CSV datasets
+├── main.py                ← CLI: train / serve / predict
+└── requirements.txt</pre>
+    </div>
+  </section>
+
+  <!-- API -->
+  <section class="about-section">
+    <h2 class="about-section-title">
+      <span class="section-icon">🔌</span> REST API
+    </h2>
+    <div class="code-block">
+      <div class="code-label">POST /api/predict</div>
+      <pre>{
+  "venue_type": "hotel",
+  "num_guests": 120,
+  "meal_type": "dinner",
+  "day_of_week": "Sat",
+  "season": "winter",
+  "event_type": "gala",
+  "buffet_style": 1,
+  "avg_rating": 4.2
+}</pre>
+    </div>
+    <div class="api-endpoints">
+      <div class="api-row"><span class="method post">POST</span><code>/api/predict</code><span>Run a prediction</span></div>
+      <div class="api-row"><span class="method get">GET</span><code>/api/model-info</code><span>Metadata for all models</span></div>
+      <div class="api-row"><span class="method post">POST</span><code>/api/train</code><span>Re-train all models</span></div>
+    </div>
+  </section>
+
+</div>
+{% endblock %}

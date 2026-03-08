@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FoodSense — {{ category | capitalize }} Prediction</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0a0f0a; --surface: #111811; --card: #161e16; --border: #1f2e1f;
+      --green: #4ade80; --green-dim: #22c55e; --green-muted: rgba(74,222,128,0.12);
+      --amber: #fbbf24; --red: #f87171; --text: #e8f0e8;
+      --text-muted: #6b8c6b; --text-dim: #9aae9a;
+    }
+    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+    nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.25rem 2.5rem; border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(16px); background: rgba(10,15,10,0.85);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.3rem; color: var(--green); letter-spacing: -0.02em; text-decoration: none; }
+    .logo span { color: var(--text); }
+    .back-btn {
+      display: inline-flex; align-items: center; gap: .5rem;
+      color: var(--text-dim); text-decoration: none; font-size: .9rem;
+      transition: color .2s;
+    }
+    .back-btn:hover { color: var(--text); }
+
+    .page-container {
+      max-width: 740px; margin: 0 auto; padding: 3rem 1.5rem 5rem;
+    }
+    .page-header {
+      margin-bottom: 2.5rem;
+      animation: fadeUp .5s ease both;
+    }
+    .category-badge {
+      display: inline-flex; align-items: center; gap: .5rem;
+      background: var(--green-muted); border: 1px solid rgba(74,222,128,0.25);
+      border-radius: 999px; padding: .3rem .85rem;
+      font-size: .78rem; color: var(--green); font-weight: 500;
+      letter-spacing: .05em; text-transform: uppercase; margin-bottom: 1rem;
+    }
+    .page-title {
+      font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800;
+      letter-spacing: -0.025em; line-height: 1.1; margin-bottom: .6rem;
+    }
+    .page-sub { font-size: .95rem; color: var(--text-dim); }
+
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+
+    .form-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 20px; padding: 2.25rem;
+      animation: fadeUp .5s .1s ease both;
+    }
+    .form-grid { display: grid; gap: 1.25rem; grid-template-columns: 1fr 1fr; }
+    .form-group { display: flex; flex-direction: column; gap: .45rem; }
+    .form-group.full { grid-column: 1 / -1; }
+    label { font-size: .82rem; font-weight: 500; color: var(--text-dim); }
+    input, select {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: .75rem 1rem;
+      color: var(--text); font-family: 'DM Sans', sans-serif; font-size: .95rem;
+      transition: border-color .2s, box-shadow .2s;
+      outline: none; width: 100%;
+      -webkit-appearance: none;
+    }
+    input:focus, select:focus {
+      border-color: rgba(74,222,128,0.5);
+      box-shadow: 0 0 0 3px rgba(74,222,128,0.08);
+    }
+    select { cursor: pointer; }
+    select option { background: var(--card); }
+
+    .submit-btn {
+      width: 100%; margin-top: 1.75rem;
+      background: var(--green); color: #0a0f0a;
+      border: none; border-radius: 12px;
+      padding: 1rem; font-size: 1rem; font-weight: 700;
+      font-family: 'Syne', sans-serif; cursor: pointer;
+      transition: background .2s, transform .15s;
+      display: flex; align-items: center; justify-content: center; gap: .6rem;
+    }
+    .submit-btn:hover { background: #86efac; transform: translateY(-1px); }
+    .submit-btn:active { transform: translateY(0); }
+    .submit-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+    /* ── Result Panel ── */
+    #result {
+      margin-top: 1.75rem; display: none;
+      animation: fadeUp .4s ease both;
+    }
+    .result-card {
+      border-radius: 16px; padding: 2rem;
+      border: 1px solid var(--border);
+    }
+    .result-card.success { background: rgba(74,222,128,0.07); border-color: rgba(74,222,128,0.2); }
+    .result-card.error { background: rgba(248,113,113,0.07); border-color: rgba(248,113,113,0.2); }
+    .result-label { font-size: .78rem; letter-spacing: .1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: .5rem; }
+    .result-value {
+      font-family: 'Syne', sans-serif;
+      font-size: 3rem; font-weight: 800;
+      color: var(--green); line-height: 1;
+      margin-bottom: .4rem;
+    }
+    .result-unit { font-size: 1.1rem; color: var(--text-dim); margin-bottom: 1.2rem; }
+    .result-level { font-size: 1.1rem; font-weight: 600; margin-bottom: 1.2rem; }
+    .result-tip {
+      background: rgba(0,0,0,0.2); border-radius: 10px;
+      padding: 1rem 1.25rem;
+      font-size: .9rem; color: var(--text-dim); line-height: 1.6;
+      border-left: 3px solid var(--green);
+    }
+    .result-tip strong { color: var(--text); display: block; margin-bottom: .3rem; font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; }
+    .error-msg { color: var(--red); font-size: .95rem; }
+
+    .loader {
+      width: 20px; height: 20px; border-radius: 50%;
+      border: 2px solid rgba(10,15,10,0.3);
+      border-top-color: #0a0f0a;
+      animation: spin .7s linear infinite; display: none;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 600px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .form-group.full { grid-column: 1; }
+      .page-container { padding: 2rem 1rem 4rem; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo">Food<span>Sense</span></a>
+  <a href="/" class="back-btn">
+    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    All Categories
+  </a>
+</nav>
+
+<div class="page-container">
+  <div class="page-header">
+    <div class="category-badge">
+      {% if category == 'hostel' %}🏫{% elif category == 'hotel' %}🏨{% elif category == 'wedding' %}💍{% else %}🏠{% endif %}
+      {{ category | capitalize }}
+    </div>
+    <h1 class="page-title">
+      {% if category == 'hostel' %}Hostel &amp; Canteen
+      {% elif category == 'hotel' %}Hotel &amp; Restaurant
+      {% elif category == 'wedding' %}Wedding &amp; Event
+      {% else %}Household
+      {% endif %}
+      <br>Waste Prediction
+    </h1>
+    <p class="page-sub">Fill in the details below to get an instant AI-powered food waste forecast.</p>
+  </div>
+
+  <div class="form-card">
+    <div class="form-grid" id="form-fields">
+
+      {% if category == 'hostel' %}
+      <div class="form-group">
+        <label for="num_students">Number of Students</label>
+        <input type="number" id="num_students" name="num_students" placeholder="e.g. 200" min="10" max="2000" />
+      </div>
+      <div class="form-group">
+        <label for="meal_type">Meal Type</label>
+        <select id="meal_type" name="meal_type">
+          <option value="">Select meal type</option>
+          <option>Breakfast</option><option>Lunch</option><option>Dinner</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="day_of_week">Day of Week</label>
+        <select id="day_of_week" name="day_of_week">
+          <option value="">Select day</option>
+          <option>Monday</option><option>Tuesday</option><option>Wednesday</option>
+          <option>Thursday</option><option>Friday</option><option>Saturday</option><option>Sunday</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="month">Month</label>
+        <select id="month" name="month">
+          <option value="">Select month</option>
+          {% for i in range(1, 13) %}
+          <option value="{{ i }}">{{ ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][i-1] }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="is_holiday">Holiday / Vacation?</label>
+        <select id="is_holiday" name="is_holiday">
+          <option value="0">No</option><option value="1">Yes</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="weather_condition">Weather Condition</label>
+        <select id="weather_condition" name="weather_condition">
+          <option value="">Select weather</option>
+          <option>Sunny</option><option>Rainy</option><option>Cloudy</option><option>Hot</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="special_event">Special Event</label>
+        <select id="special_event" name="special_event">
+          <option value="None">None</option>
+          <option>Festival</option><option>Sports</option><option>Exam</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="menu_variety_score">Menu Variety Score (1–10)</label>
+        <input type="number" id="menu_variety_score" name="menu_variety_score" placeholder="e.g. 6" min="1" max="10" step="0.1" />
+      </div>
+      <div class="form-group full">
+        <label for="prev_week_waste_kg">Previous Week Waste (kg)</label>
+        <input type="number" id="prev_week_waste_kg" name="prev_week_waste_kg" placeholder="e.g. 35" min="0" step="0.5" />
+      </div>
+
+      {% elif category == 'hotel' %}
+      <div class="form-group">
+        <label for="num_guests">Number of Guests</label>
+        <input type="number" id="num_guests" name="num_guests" placeholder="e.g. 80" min="1" max="2000" />
+      </div>
+      <div class="form-group">
+        <label for="meal_type">Meal Type</label>
+        <select id="meal_type" name="meal_type">
+          <option value="">Select meal type</option>
+          <option>Breakfast</option><option>Lunch</option><option>Dinner</option><option>Brunch</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="hotel_category">Hotel Category</label>
+        <select id="hotel_category" name="hotel_category">
+          <option value="">Select category</option>
+          <option>Budget</option><option>3-star</option><option>4-star</option><option>5-star</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="buffet_or_alacarte">Service Style</label>
+        <select id="buffet_or_alacarte" name="buffet_or_alacarte">
+          <option value="Buffet">Buffet</option><option value="A-La-Carte">A-La-Carte</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="occupancy_rate">Occupancy Rate (0–1)</label>
+        <input type="number" id="occupancy_rate" name="occupancy_rate" placeholder="e.g. 0.75" min="0" max="1" step="0.01" />
+      </div>
+      <div class="form-group">
+        <label for="weather_condition">Weather</label>
+        <select id="weather_condition" name="weather_condition">
+          <option value="">Select weather</option>
+          <option>Sunny</option><option>Rainy</option><option>Cloudy</option><option>Hot</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="day_of_week">Day of Week</label>
+        <select id="day_of_week" name="day_of_week">
+          <option value="">Select day</option>
+          <option>Monday</option><option>Tuesday</option><option>Wednesday</option>
+          <option>Thursday</option><option>Friday</option><option>Saturday</option><option>Sunday</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="month">Month</label>
+        <select id="month" name="month">
+          <option value="">Select month</option>
+          {% for i in range(1, 13) %}
+          <option value="{{ i }}">{{ ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][i-1] }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="special_event">Special Event</label>
+        <select id="special_event" name="special_event">
+          <option value="None">None</option>
+          <option>Conference</option><option>Wedding</option><option>Festival</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="prev_day_waste_kg">Yesterday's Waste (kg)</label>
+        <input type="number" id="prev_day_waste_kg" name="prev_day_waste_kg" placeholder="e.g. 45" min="0" step="0.5" />
+      </div>
+
+      {% elif category == 'wedding' %}
+      <div class="form-group">
+        <label for="num_guests">Number of Guests</label>
+        <input type="number" id="num_guests" name="num_guests" placeholder="e.g. 300" min="1" max="5000" />
+      </div>
+      <div class="form-group">
+        <label for="cuisine_type">Cuisine Type</label>
+        <select id="cuisine_type" name="cuisine_type">
+          <option value="">Select cuisine</option>
+          <option>North Indian</option><option>South Indian</option><option>Continental</option><option>Mixed</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="num_courses">Number of Courses</label>
+        <input type="number" id="num_courses" name="num_courses" placeholder="e.g. 5" min="1" max="15" />
+      </div>
+      <div class="form-group">
+        <label for="buffet_or_plated">Service Style</label>
+        <select id="buffet_or_plated" name="buffet_or_plated">
+          <option value="Buffet">Buffet</option><option value="Plated">Plated</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="venue_type">Venue Type</label>
+        <select id="venue_type" name="venue_type">
+          <option value="">Select venue</option>
+          <option>Indoor</option><option>Outdoor</option><option>Banquet Hall</option><option>Farm House</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="caterer_experience_years">Caterer Experience (years)</label>
+        <input type="number" id="caterer_experience_years" name="caterer_experience_years" placeholder="e.g. 10" min="0" max="50" />
+      </div>
+      <div class="form-group">
+        <label for="pre_event_confirmation_rate">RSVP Confirmation Rate (0–1)</label>
+        <input type="number" id="pre_event_confirmation_rate" name="pre_event_confirmation_rate" placeholder="e.g. 0.85" min="0" max="1" step="0.01" />
+      </div>
+      <div class="form-group">
+        <label for="day_of_week">Day of Week</label>
+        <select id="day_of_week" name="day_of_week">
+          <option value="">Select day</option>
+          <option>Monday</option><option>Tuesday</option><option>Wednesday</option>
+          <option>Thursday</option><option>Friday</option><option>Saturday</option><option>Sunday</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="month">Month</label>
+        <select id="month" name="month">
+          <option value="">Select month</option>
+          {% for i in range(1, 13) %}
+          <option value="{{ i }}">{{ ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][i-1] }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      {% else %} {# household #}
+      <div class="form-group">
+        <label for="num_members">Number of Family Members</label>
+        <input type="number" id="num_members" name="num_members" placeholder="e.g. 4" min="1" max="20" />
+      </div>
+      <div class="form-group">
+        <label for="income_bracket">Income Bracket</label>
+        <select id="income_bracket" name="income_bracket">
+          <option value="">Select bracket</option>
+          <option>Low</option><option>Middle</option><option>High</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="shopping_frequency">Shopping Frequency</label>
+        <select id="shopping_frequency" name="shopping_frequency">
+          <option value="">Select frequency</option>
+          <option>Daily</option><option>Weekly</option><option>Bi-Weekly</option><option>Monthly</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="meal_planning_score">Meal Planning Score (1–10)</label>
+        <input type="number" id="meal_planning_score" name="meal_planning_score" placeholder="e.g. 7" min="1" max="10" step="0.1" />
+      </div>
+      <div class="form-group">
+        <label for="has_kids">Has Children?</label>
+        <select id="has_kids" name="has_kids">
+          <option value="0">No</option><option value="1">Yes</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="storage_quality">Food Storage Quality</label>
+        <select id="storage_quality" name="storage_quality">
+          <option value="">Select quality</option>
+          <option>Poor</option><option>Average</option><option>Good</option><option>Excellent</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="cuisine_preference">Cuisine Preference</label>
+        <select id="cuisine_preference" name="cuisine_preference">
+          <option value="">Select preference</option>
+          <option>Veg</option><option>Non-Veg</option><option>Mixed</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="day_of_week">Day of Week</label>
+        <select id="day_of_week" name="day_of_week">
+          <option value="">Select day</option>
+          <option>Monday</option><option>Tuesday</option><option>Wednesday</option>
+          <option>Thursday</option><option>Friday</option><option>Saturday</option><option>Sunday</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="month">Month</label>
+        <select id="month" name="month">
+          <option value="">Select month</option>
+          {% for i in range(1, 13) %}
+          <option value="{{ i }}">{{ ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][i-1] }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      {% endif %}
+
+    </div>
+
+    <button class="submit-btn" id="predict-btn" onclick="submitPrediction()">
+      <span id="btn-text">Predict Food Waste</span>
+      <div class="loader" id="btn-loader"></div>
+    </button>
+
+    <div id="result">
+      <div class="result-card" id="result-card">
+        <div class="result-label">Predicted Food Waste</div>
+        <div class="result-value" id="res-value">—</div>
+        <div class="result-unit" id="res-unit"></div>
+        <div class="result-level" id="res-level"></div>
+        <div class="result-tip" id="res-tip"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const CATEGORY = "{{ category }}";
+
+  function getFormData() {
+    const inputs = document.querySelectorAll('#form-fields input, #form-fields select');
+    const data = {};
+    inputs.forEach(el => {
+      if (el.name && el.value !== '') {
+        const v = parseFloat(el.value);
+        data[el.name] = isNaN(v) ? el.value : v;
+      }
+    });
+    return data;
+  }
+
+  async function submitPrediction() {
+    const btn = document.getElementById('predict-btn');
+    const loader = document.getElementById('btn-loader');
+    const btnText = document.getElementById('btn-text');
+    const resultDiv = document.getElementById('result');
+    const card = document.getElementById('result-card');
+
+    btn.disabled = true;
+    loader.style.display = 'block';
+    btnText.textContent = 'Predicting…';
+
+    const data = getFormData();
+
+    try {
+      const resp = await fetch(`/api/predict/${CATEGORY}`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+      });
+      const result = await resp.json();
+
+      resultDiv.style.display = 'block';
+      resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+      if (result.status === 'success') {
+        card.className = 'result-card success';
+        document.getElementById('res-value').textContent = result.predicted_waste_kg.toFixed(1);
+        document.getElementById('res-unit').textContent = 'kilograms estimated waste';
+        document.getElementById('res-level').textContent = result.waste_level;
+        document.getElementById('res-tip').innerHTML = `<strong>💡 Recommendation</strong>${result.tip}`;
+      } else {
+        card.className = 'result-card error';
+        document.getElementById('res-value').textContent = '⚠';
+        document.getElementById('res-unit').textContent = '';
+        document.getElementById('res-level').textContent = '';
+        document.getElementById('res-tip').innerHTML = `<span class="error-msg">${result.message || 'Prediction failed. Please check your inputs.'}</span>`;
+      }
+    } catch (err) {
+      resultDiv.style.display = 'block';
+      card.className = 'result-card error';
+      document.getElementById('res-value').textContent = '⚠';
+      document.getElementById('res-unit').textContent = '';
+      document.getElementById('res-level').textContent = '';
+      document.getElementById('res-tip').innerHTML = `<span class="error-msg">Network error. Please try again.</span>`;
+    } finally {
+      btn.disabled = false;
+      loader.style.display = 'none';
+      btnText.textContent = 'Predict Food Waste';
+    }
+  }
+</script>
+
+</body>
+</html>
