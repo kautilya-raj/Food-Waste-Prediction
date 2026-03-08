@@ -10,6 +10,12 @@
 
 ---
 
+# How to Run
+
+First Create a Python Virtual Environment
+
+---
+
 ## 📌 Project Description
 
 FoodWise uses machine learning regression models to predict **how many kilograms of food
